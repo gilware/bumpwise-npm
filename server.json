@@ -1,0 +1,25 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.gilware/bumpwise",
+  "title": "Bumpwise",
+  "description": "What a dependency upgrade breaks in Java/Kotlin code (file:line), and API breaks before a release.",
+  "websiteUrl": "https://gilware.com/bumpwise/cli/",
+  "version": "1.1.3",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@gilware/bumpwise",
+      "version": "1.1.3",
+      "runtimeHint": "npx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ]
+    }
+  ]
+}
