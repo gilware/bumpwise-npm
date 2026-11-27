@@ -1,5 +1,7 @@
 # Bumpwise command line and MCP server
 
+[![gilware/bumpwise-npm MCP server](https://glama.ai/mcp/servers/gilware/bumpwise-npm/badges/score.svg)](https://glama.ai/mcp/servers/gilware/bumpwise-npm)
+
 Bumpwise checks Java and Kotlin projects for breaking changes, from their compiled classes:
 
 - **Before a dependency upgrade:** which places in your project (file and line) the new version breaks. Maven
