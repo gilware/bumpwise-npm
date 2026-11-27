@@ -19,6 +19,9 @@ claude mcp add bumpwise -- npx -y @gilware/bumpwise mcp
 Other clients: run `npx -y @gilware/bumpwise mcp` as a stdio server. Tools: `check_api_compatibility` and
 `check_dependency_upgrade`. Build the project first; Bumpwise reads the build output.
 
+The [Bumpwise skills](https://github.com/gilware/bumpwise-skills) tell the agent when to use them (before a version
+change, after an API change): `npx skills add gilware/bumpwise-skills`.
+
 ## In a terminal
 
 ```sh
