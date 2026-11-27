@@ -8,6 +8,8 @@
   "engines": { "node": ">=18" },
   "keywords": ["mcp", "mcp-server", "java", "kotlin", "maven", "gradle", "android", "dependency-upgrade", "binary-compatibility", "semver", "dependabot"],
   "homepage": "https://gilware.com/bumpwise/cli/",
+  "repository": { "type": "git", "url": "git+https://github.com/gilware/bumpwise-npm.git" },
+  "bugs": { "url": "https://github.com/gilware/bumpwise-npm/issues", "email": "hello@gilware.com" },
   "author": "Gilware <hello@gilware.com>",
   "license": "MIT"
 }

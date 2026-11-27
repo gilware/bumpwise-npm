@@ -1,0 +1,63 @@
+# Publishes a release in order: npm (trusted publishing, with provenance), then the MCP Registry once npm serves the
+# new version (the registry checks npm and answers 400 "version not found" if it runs too early).
+# Start it by publishing a GitHub release tagged v<version> on the release commit; Glama reads the same release.
+# Needs, once, on npmjs.com: package @gilware/bumpwise > Settings > Trusted publisher > GitHub Actions,
+# organization gilware, repository bumpwise-npm, workflow release.yml.
+name: Release
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  id-token: write
+  contents: read
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Trusted publishing needs npm 11.5.1 or later
+        run: npm install -g npm@11
+      - name: Versions agree with each other and with the tag
+        run: |
+          v=$(sed -n 's/^const VERSION = "\(.*\)";$/\1/p' bin/bumpwise.js)
+          test -n "$v"
+          test "$(node -p 'require("./package.json").version')" = "$v"
+          test "$(node -p 'require("./server.json").version')" = "$v"
+          test "$(node -p 'require("./server.json").packages[0].version')" = "$v"
+          if [ "${{ github.event_name }}" = release ]; then test "${{ github.event.release.tag_name }}" = "v$v"; fi
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+      - name: SHA-256 matches the published jar's checksum file
+        run: |
+          sha=$(sed -n 's/^const SHA256 = "\(.*\)";$/\1/p' bin/bumpwise.js)
+          published=$(curl -fsSL -A bumpwise-internal/release "https://gilware.com/bumpwise/cli/bumpwise-$VERSION.jar.sha256" | cut -d' ' -f1)
+          test "$sha" = "$published"
+      - name: Publish to npm (skipped if this version is already there)
+        run: |
+          if npm view "@gilware/bumpwise@$VERSION" version >/dev/null 2>&1; then
+            echo "@gilware/bumpwise@$VERSION is already on npm"
+          else
+            npm publish --access public --provenance
+          fi
+      - name: Wait until npm serves the new version
+        run: |
+          for i in $(seq 1 40); do
+            got=$(curl -fsSL "https://registry.npmjs.org/@gilware/bumpwise/$VERSION" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).version)}catch{}})' || true)
+            if [ "$got" = "$VERSION" ]; then echo "npm serves $VERSION"; exit 0; fi
+            sleep 15
+          done
+          echo "npm still does not serve $VERSION after 10 minutes"; exit 1
+      - name: Install mcp-publisher
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.16/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+      - name: Publish server.json to the MCP Registry
+        run: |
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
