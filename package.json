@@ -1,6 +1,6 @@
 {
   "name": "@gilware/bumpwise",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Launcher for the Bumpwise command line and MCP server: what a dependency upgrade breaks in a Java or Kotlin project, and whether a library build breaks its last release.",
   "mcpName": "io.github.gilware/bumpwise",
   "bin": { "bumpwise": "bin/bumpwise.js" },

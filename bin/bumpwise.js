@@ -10,8 +10,8 @@ const https = require("node:https");
 const os = require("node:os");
 const path = require("node:path");
 
-const VERSION = "1.1.4";
-const SHA256 = "2b3459aa44312ccb0944c25a7dee563600722b0589a25bfc0182ea577fe26877";
+const VERSION = "1.1.5";
+const SHA256 = "c503e986d4ba2ce91671732820455d647c041c4c384bcb2f297a86e03a6fb1ed";
 const URL = `https://gilware.com/bumpwise/cli/bumpwise-${VERSION}.jar`;
 
 function fail(message) {
