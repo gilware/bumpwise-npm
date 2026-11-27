@@ -10,6 +10,8 @@ const https = require("node:https");
 const os = require("node:os");
 const path = require("node:path");
 
+// The command line version this launcher runs. The npm package has its own patch line (package.json), so a launcher-only
+// release does not need a new command line.
 const VERSION = "1.1.5";
 const SHA256 = "c503e986d4ba2ce91671732820455d647c041c4c384bcb2f297a86e03a6fb1ed";
 const URL = `https://gilware.com/bumpwise/cli/bumpwise-${VERSION}.jar`;

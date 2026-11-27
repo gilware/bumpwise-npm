@@ -29,18 +29,18 @@ jobs:
         run: npm install -g npm@11 && npm --version
       - name: Versions agree with each other and with the tag
         run: |
-          v=$(sed -n 's/^const VERSION = "\(.*\)";$/\1/p' bin/bumpwise.js)
-          test -n "$v"
-          test "$(node -p 'require("./package.json").version')" = "$v"
+          v=$(node -p 'require("./package.json").version')
           test "$(node -p 'require("./server.json").version')" = "$v"
           test "$(node -p 'require("./server.json").packages[0].version')" = "$v"
           if [ "${{ github.event_name }}" = release ]; then test "${{ github.event.release.tag_name }}" = "v$v"; fi
           echo "VERSION=$v" >> "$GITHUB_ENV"
-      - name: SHA-256 matches the published jar's checksum file
+      - name: The launcher's SHA-256 matches the published command line's checksum file
         run: |
+          cli=$(sed -n 's/^const VERSION = "\(.*\)";$/\1/p' bin/bumpwise.js)
           sha=$(sed -n 's/^const SHA256 = "\(.*\)";$/\1/p' bin/bumpwise.js)
-          published=$(curl -fsSL -A bumpwise-internal/release "https://gilware.com/bumpwise/cli/bumpwise-$VERSION.jar.sha256" | cut -d' ' -f1)
+          published=$(curl -fsSL -A bumpwise-internal/release "https://gilware.com/bumpwise/cli/bumpwise-$cli.jar.sha256" | cut -d' ' -f1)
           test "$sha" = "$published"
+          echo "package $VERSION runs command line $cli"
       - name: Stage on npm (skipped if this version is already published)
         run: |
           if npm view "@gilware/bumpwise@$VERSION" version >/dev/null 2>&1; then

@@ -15,14 +15,14 @@ jobs:
           node-version: 22
       - name: Syntax
         run: node --check bin/bumpwise.js
-      - name: Versions agree (launcher, package.json, server.json)
+      - name: Versions agree (package.json, server.json)
         run: |
-          v=$(sed -n 's/^const VERSION = "\(.*\)";$/\1/p' bin/bumpwise.js)
-          test -n "$v"
-          test "$(node -p 'require("./package.json").version')" = "$v"
+          v=$(node -p 'require("./package.json").version')
           test "$(node -p 'require("./server.json").version')" = "$v"
           test "$(node -p 'require("./server.json").packages[0].version')" = "$v"
-          echo "version $v"
+          cli=$(sed -n 's/^const VERSION = "\(.*\)";$/\1/p' bin/bumpwise.js)
+          test -n "$cli"
+          echo "package $v, command line $cli"
       - name: SHA-256 matches the published jar's checksum file
         run: |
           v=$(sed -n 's/^const VERSION = "\(.*\)";$/\1/p' bin/bumpwise.js)
