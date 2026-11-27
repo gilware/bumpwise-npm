@@ -1,8 +1,10 @@
-# Publishes a release in order: npm (trusted publishing, with provenance), then the MCP Registry once npm serves the
-# new version (the registry checks npm and answers 400 "version not found" if it runs too early).
+# Publishes a release in order: stages the npm package (trusted publishing, stage-only), waits until a maintainer
+# approves it on npmjs.com (Staged Packages tab, with 2FA) and npm serves the version, then publishes server.json to
+# the MCP Registry (the registry checks npm and answers 400 "version not found" if it runs too early).
 # Start it by publishing a GitHub release tagged v<version> on the release commit; Glama reads the same release.
-# Needs, once, on npmjs.com: package @gilware/bumpwise > Settings > Trusted publisher > GitHub Actions,
-# organization gilware, repository bumpwise-npm, workflow release.yml.
+# Needs on npmjs.com: package @gilware/bumpwise > Settings > Trusted publisher > GitHub Actions, organization gilware,
+# repository bumpwise-npm, workflow release.yml, permission "npm stage publish".
+# If the approval comes after the wait below, run the "Publish to the MCP Registry" workflow by hand.
 name: Release
 on:
   release:
@@ -23,8 +25,8 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      - name: Trusted publishing needs npm 11.5.1 or later
-        run: npm install -g npm@11
+      - name: Staged publishing needs npm 11.15.0 or later
+        run: npm install -g npm@11 && npm --version
       - name: Versions agree with each other and with the tag
         run: |
           v=$(sed -n 's/^const VERSION = "\(.*\)";$/\1/p' bin/bumpwise.js)
@@ -39,21 +41,23 @@ jobs:
           sha=$(sed -n 's/^const SHA256 = "\(.*\)";$/\1/p' bin/bumpwise.js)
           published=$(curl -fsSL -A bumpwise-internal/release "https://gilware.com/bumpwise/cli/bumpwise-$VERSION.jar.sha256" | cut -d' ' -f1)
           test "$sha" = "$published"
-      - name: Publish to npm (skipped if this version is already there)
+      - name: Stage on npm (skipped if this version is already published)
         run: |
           if npm view "@gilware/bumpwise@$VERSION" version >/dev/null 2>&1; then
             echo "@gilware/bumpwise@$VERSION is already on npm"
           else
-            npm publish --access public --provenance
+            npm stage publish --access public --provenance
+            echo "::notice::Staged @gilware/bumpwise@$VERSION: approve it on npmjs.com (Staged Packages tab)"
           fi
-      - name: Wait until npm serves the new version
+      - name: Wait for the approval, until npm serves the new version
+        timeout-minutes: 125
         run: |
-          for i in $(seq 1 40); do
+          for i in $(seq 1 240); do
             got=$(curl -fsSL "https://registry.npmjs.org/@gilware/bumpwise/$VERSION" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).version)}catch{}})' || true)
             if [ "$got" = "$VERSION" ]; then echo "npm serves $VERSION"; exit 0; fi
-            sleep 15
+            sleep 30
           done
-          echo "npm still does not serve $VERSION after 10 minutes"; exit 1
+          echo "npm does not serve $VERSION after 2 hours: approve it, then run the Publish to the MCP Registry workflow"; exit 1
       - name: Install mcp-publisher
         run: |
           curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/v1.8.16/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
